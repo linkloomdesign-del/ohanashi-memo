@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import {
   Conversation,
   ChatMessage,
@@ -21,6 +21,61 @@ import {
 import { generateId } from '@/lib/utils';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import * as dataService from '@/services/data/dataService';
+
+const STORAGE_KEY = 'ohanashi-memo-data';
+
+function saveToLocalStorage(data: {
+  conversations: Conversation[];
+  conversationCards: ConversationCard[];
+  memos: Memo[];
+  familyMessages: FamilyMessage[];
+  usageLogs: AppUsageLog[];
+}) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // localStorage full or unavailable
+  }
+}
+
+function loadFromLocalStorage(): {
+  conversations: Conversation[];
+  conversationCards: ConversationCard[];
+  memos: Memo[];
+  familyMessages: FamilyMessage[];
+  usageLogs: AppUsageLog[];
+} | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+
+    // Restore Date objects from JSON strings
+    const restoreDates = <T extends Record<string, unknown>>(items: T[], dateFields: string[]): T[] =>
+      items.map((item) => {
+        const restored = { ...item };
+        for (const field of dateFields) {
+          if (restored[field]) restored[field] = new Date(restored[field] as string) as unknown as T[string];
+        }
+        return restored;
+      });
+
+    data.conversations = restoreDates(data.conversations, ['startedAt', 'endedAt', 'createdAt']).map(
+      (c: Conversation) => ({
+        ...c,
+        messages: restoreDates(c.messages || [], ['createdAt']),
+      })
+    );
+    data.conversationCards = restoreDates(data.conversationCards, ['createdAt']);
+    data.memos = restoreDates(data.memos, ['createdAt', 'updatedAt']);
+    data.familyMessages = restoreDates(data.familyMessages, ['createdAt']);
+    data.usageLogs = restoreDates(data.usageLogs, ['createdAt']);
+
+    return data;
+  } catch {
+    return null;
+  }
+}
 
 interface AppState {
   conversations: Conversation[];
@@ -53,8 +108,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const initialized = useRef(false);
+
   // Load data on client mount
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
     if (useSupabase) {
       async function loadData() {
         const [convs, cards, m, fm, logs, profs] = await Promise.all([
@@ -75,16 +135,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       loadData();
     } else {
-      // Load mock data on client side only
-      setConversations(mockConversations);
-      setConversationCards(mockConversationCards);
-      setMemos(mockMemos);
-      setFamilyMessages(mockFamilyMessages);
-      setUsageLogs(mockUsageLogs);
+      // Try localStorage first, fallback to mock data
+      const saved = loadFromLocalStorage();
+      if (saved && (saved.conversations.length > 0 || saved.memos.length > 0 || saved.usageLogs.length > 0)) {
+        setConversations(saved.conversations);
+        setConversationCards(saved.conversationCards);
+        setMemos(saved.memos);
+        setFamilyMessages(saved.familyMessages);
+        setUsageLogs(saved.usageLogs);
+      } else {
+        setConversations(mockConversations);
+        setConversationCards(mockConversationCards);
+        setMemos(mockMemos);
+        setFamilyMessages(mockFamilyMessages);
+        setUsageLogs(mockUsageLogs);
+      }
       setProfiles(initialProfiles);
       setIsLoading(false);
     }
   }, [useSupabase]);
+
+  // Auto-save to localStorage whenever data changes (skip initial empty state)
+  useEffect(() => {
+    if (isLoading || useSupabase) return;
+    saveToLocalStorage({ conversations, conversationCards, memos, familyMessages, usageLogs });
+  }, [conversations, conversationCards, memos, familyMessages, usageLogs, isLoading, useSupabase]);
 
   const addConversation = useCallback((conversation: Conversation) => {
     setConversations((prev) => [conversation, ...prev]);
