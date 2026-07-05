@@ -3,6 +3,7 @@
   "short_name": "おはなしメモ",
   "description": "やさしいAI見守りアプリ",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#FFF8F0",
   "theme_color": "#6BB77B",
