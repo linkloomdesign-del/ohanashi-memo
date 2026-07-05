@@ -122,57 +122,7 @@ export const mockConversationCards: ConversationCard[] = [
   },
 ];
 
-export const mockMemos: Memo[] = [
-  {
-    id: 'memo-1',
-    userId: 'mother-1',
-    conversationId: 'conv-1',
-    memoType: 'shopping',
-    title: '買い物メモ',
-    items: ['人参', '卵'],
-    originalText: '後で人参と卵買わなきゃ',
-    status: 'open',
-    familyConfirmRequired: false,
-    createdAt: new Date('2026-06-10T10:03:00'),
-    updatedAt: new Date('2026-06-10T10:03:00'),
-  },
-  {
-    id: 'memo-2',
-    userId: 'mother-1',
-    conversationId: 'conv-2',
-    memoType: 'todo',
-    title: '洗濯物を取り込む',
-    originalText: '洗濯物取り込まなきゃ',
-    status: 'open',
-    familyConfirmRequired: false,
-    createdAt: new Date('2026-06-09T14:03:00'),
-    updatedAt: new Date('2026-06-09T14:03:00'),
-  },
-  {
-    id: 'memo-3',
-    userId: 'mother-1',
-    conversationId: 'conv-2',
-    memoType: 'health',
-    title: '少し頭が痛い',
-    originalText: '少し頭が痛いんだよね',
-    status: 'open',
-    familyConfirmRequired: false,
-    createdAt: new Date('2026-06-09T14:03:00'),
-    updatedAt: new Date('2026-06-09T14:03:00'),
-  },
-  {
-    id: 'memo-4',
-    userId: 'mother-1',
-    conversationId: 'conv-2',
-    memoType: 'schedule',
-    title: '明日 病院',
-    originalText: '明日病院に行く予定',
-    status: 'open',
-    familyConfirmRequired: true,
-    createdAt: new Date('2026-06-09T14:03:00'),
-    updatedAt: new Date('2026-06-09T14:03:00'),
-  },
-];
+export const mockMemos: Memo[] = [];
 
 export const mockFamilyMessages: FamilyMessage[] = [
   {
