@@ -51,11 +51,12 @@ function loadFromLocalStorage(): {
     const data = JSON.parse(raw);
 
     // Restore Date objects from JSON strings
-    const restoreDates = <T extends Record<string, unknown>>(items: T[], dateFields: string[]): T[] =>
-      items.map((item) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const restoreDates = (items: any[], dateFields: string[]) =>
+      items.map((item: any) => {
         const restored = { ...item };
         for (const field of dateFields) {
-          if (restored[field]) restored[field] = new Date(restored[field] as string) as unknown as T[string];
+          if (restored[field]) restored[field] = new Date(restored[field]);
         }
         return restored;
       });
